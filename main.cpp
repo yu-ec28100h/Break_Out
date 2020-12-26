@@ -3,10 +3,11 @@
 
 #include "Font.h"
 #include "Audio.h"
+#include "Rect.h"
+#include "Ball.h"
 
 #include "glut.h"
 #include "glm/glm.hpp"
-#include "Rect.h"
 
 using namespace glm;
 
@@ -15,6 +16,7 @@ ivec2 windowSize = { 800, 600 };
 bool keys[256];
 
 Rect field;
+Ball ball = {8};
 
 void display(void)
 {
@@ -32,6 +34,9 @@ void display(void)
 	glColor3ub(0x00, 0x00, 0x00);
 	field.draw();
 
+	glColor3ub(0xff, 0xff, 0xff);
+	ball.draw()
+
 	fontBegin();
 	fontSetHeight(FONT_DEFAULT_HEIGHT);
 	fontSetPosition(0, 0);
@@ -44,6 +49,21 @@ void display(void)
 void idle(void)
 {
 	audioUpdate();
+	ball.update();
+
+	if((ball.m_position.x < field.m_position.x)
+		||(ball.m_position.x >= field.m_position.x + field.m_size.x))
+	{
+		ball.m_position = ball.m_lastPosition;
+		ball.m_speed.y *= -1;
+	}
+	if((ball.m_position.y >= field.m_position.y + field.m_size.y)
+		||(ball.m_position.y < field.m_position.y))
+	{
+		ball.m_position = ball.m_lastPosition;
+		ball.m_speed.y *= -1;
+	}
+
 	glutPostRedisplay();
 }
 
@@ -58,6 +78,9 @@ void reshape(int width, int height)
 	field.m_size.x = field.m_size.y;
 	field.m_position.x = (windowSize.x - field.m_size.x) / 2;
 	field.m_position.y = frameHeight;
+
+	ball.m_lastPosition = ball.m_position = vec2(field.m_position.x, field.m_position.y + field.m_size.y / 2);
+	ball.m_speed = vec2(1, 1) * 2.f;
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -95,6 +118,6 @@ int main(int argc, char *argv[])
 	glutKeyboardUpFunc(keyboardUp);
 	glutIgnoreKeyRepeat(GL_TRUE);   //キーボード長押し禁止
 	glutPassiveMotionFunc(passiveMotion);
-
+	reshape(windowSize.x, windowSize.y);
 	glutMainLoop();
 }
