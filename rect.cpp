@@ -2,6 +2,9 @@
 #include "glut.h"
 #include "Rect.h"
 
+Rect::Rect()
+{}
+
 Rect::Rect(vec2 const& _position, vec2 const& _size)
 :m_position(_position)
 ,m_size(_size)

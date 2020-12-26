@@ -6,12 +6,15 @@
 
 #include "glut.h"
 #include "glm/glm.hpp"
+#include "Rect.h"
 
 using namespace glm;
 
 ivec2 windowSize = { 800, 600 };
 
 bool keys[256];
+
+Rect field;
 
 void display(void)
 {
@@ -23,6 +26,12 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);    //GLenum mode
 	glLoadIdentity();
 	
+	glColor3ub(0xff, 0xff, 0xff);
+	glRectf(field.m_position.x - 8, 0,
+			field.m_position.x + field.m_size.x + 8, windowSize.y);
+	glColor3ub(0x00, 0x00, 0x00);
+	field.draw();
+
 	fontBegin();
 	fontSetHeight(FONT_DEFAULT_HEIGHT);
 	fontSetPosition(0, 0);
@@ -43,6 +52,12 @@ void reshape(int width, int height)
 	printf("reshape: width:%d height:%d\n", width, height);
 	glViewport(0, 0, width, height);    //GLint x, y / GLsizei width, height
 	windowSize = ivec2(width, height);
+
+	float frameHeight = 16;
+	field.m_size.y = windowSize.y - frameHeight;
+	field.m_size.x = field.m_size.y;
+	field.m_position.x = (windowSize.x - field.m_size.x) / 2;
+	field.m_position.y = frameHeight;
 }
 
 void keyboard(unsigned char key, int x, int y)
