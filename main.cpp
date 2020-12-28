@@ -16,6 +16,7 @@
 #define BALL_X_SPEED_MAX 4.f
 #define FONT_HEIGHT 32
 #define FONT_WEIGHT 4
+#define SE_WAIT_MAX 6
 
 using namespace glm;
 
@@ -30,6 +31,9 @@ Rect blocks[BLOCK_ROW_MAX][BLOCK_COLUMN_MAX];
 
 int turn = 1;
 int score;
+
+int seCout;
+int seWait;
 
 void display(void)
 {
@@ -103,24 +107,48 @@ void display(void)
 
 void idle(void)
 {
+	if (seCout > 0)
+	{
+		if (--seWait < 0)
+		{
+			seCout--;
+			seWait = SE_WAIT_MAX;
+
+			audioStop();
+			audioFreq(440 / 2);
+			audioPlay();
+		}
+	}
 	audioUpdate();
 	ball.update();
 
 	if((ball.m_position.x < field.m_position.x)
 		||(ball.m_position.x >= field.m_position.x + field.m_size.x))
 	{
+		audioStop();
+		audioFreq(440);
+		audioPlay();
+
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.x *= -1;
 	}
 	if((ball.m_position.y < field.m_position.y)
 		||(ball.m_position.y >= field.m_position.y + field.m_size.y))
 	{
+		audioStop();
+		audioFreq(440);
+		audioPlay();
+
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.y *= -1;
 	}
 	
 	if (paddle.intersectBall(ball))
 	{
+		audioStop();
+		audioFreq(440 * 2);
+		audioPlay();
+
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.y *= -1;
 
@@ -144,7 +172,16 @@ void idle(void)
 
 				int colorIdx = 3 - (i / 2);
 				printf("%d\n", colorIdx);
-				score += 1 + 2 * colorIdx;
+				int s = 1 + 2 * colorIdx;
+				
+				audioStop();
+				audioFreq(440/2);
+				audioPlay();
+
+				seCout += s - 1;
+				seWait = SE_WAIT_MAX;
+
+				score += s;
 
 				flag = true;
 				break;
@@ -214,6 +251,8 @@ void passiveMotion(int x, int y)
 int main(int argc, char *argv[])
 {
 	audioInit();
+	audioWaveform(AUDIO_WAVEFORM_PULSE_50);
+	audioDecay(.9f);
 
 	glutInit(&argc, argv);          //int *argcp, char **argv
 	glutInitDisplayMode(GL_DOUBLE);
