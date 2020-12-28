@@ -14,6 +14,8 @@
 #define BLOCK_COLUMN_MAX 14
 #define BLOCK_ROW_MAX 8
 #define BALL_X_SPEED_MAX 4.f
+#define FONT_HEIGHT 32
+#define FONT_WEIGHT 4
 
 using namespace glm;
 
@@ -25,6 +27,9 @@ Rect field;
 Ball ball = { 8 };
 Paddle paddle = { PADDLE_DEFFAULT_WIDTH };
 Rect blocks[BLOCK_ROW_MAX][BLOCK_COLUMN_MAX];
+
+int turn = 1;
+int score;
 
 void display(void)
 {
@@ -71,11 +76,27 @@ void display(void)
 	glColor3ub(0x00, 0xff, 0xff);
 	paddle.draw();
 
-	fontBegin();
-	fontSetHeight(FONT_DEFAULT_HEIGHT);
-	fontSetPosition(0, 0);
-	//fontDraw("");
-	fontEnd();
+	glColor3ub(0xff, 0xff, 0xff);
+	{
+		float x = field.m_position.x, y = field.m_position.y;
+		fontBegin();
+		fontSetHeight(FONT_HEIGHT);
+		fontSetWeight(FONT_WEIGHT);
+		fontSetPosition(x, y);
+		fontDraw("1");
+		fontSetPosition(x + field.m_size.x / 2, y);
+		fontDraw("%d\n", turn);
+		x += fontGetWidth();
+		fontSetPosition(x, y);
+		{
+			static unsigned frame;
+			if((++frame/15) % 2 == 0)
+				fontDraw("%03d", score);
+		}
+		fontSetPosition(x + field.m_size.x / 2, y);
+		fontDraw("000");
+		fontEnd();
+	}
 
 	glutSwapBuffers();
 }
@@ -120,6 +141,11 @@ void idle(void)
 			{
 				blocks[i][j].isDead = true;
 				ball.m_speed.y *= -1;
+
+				int colorIdx = 3 - (i / 2);
+				printf("%d\n", colorIdx);
+				score += 1 + 2 * colorIdx;
+
 				flag = true;
 				break;
 			}
@@ -150,7 +176,7 @@ void reshape(int width, int height)
 		field.m_position.y + field.m_size.y - 48);
 
 	vec2 blockSize = vec2(field.m_size.x / BLOCK_COLUMN_MAX, 12);
-	float y = field.m_position.y + 64;
+	float y = field.m_position.y + (FONT_HEIGHT + FONT_WEIGHT)*2;
 	for (int i = 0; i < BLOCK_ROW_MAX; i++)
 	{
 		for (int j = 0; j < BLOCK_COLUMN_MAX; j++)
