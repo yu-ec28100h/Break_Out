@@ -5,9 +5,12 @@
 #include "Audio.h"
 #include "Rect.h"
 #include "Ball.h"
+#include "Paddle.h"
 
 #include "glut.h"
 #include "glm/glm.hpp"
+
+#define PADDLE_DEFFAULT_WIDTH 64
 
 using namespace glm;
 
@@ -17,6 +20,7 @@ bool keys[256];
 
 Rect field;
 Ball ball = { 8 };
+Paddle paddle = { PADDLE_DEFFAULT_WIDTH };
 
 void display(void)
 {
@@ -36,6 +40,9 @@ void display(void)
 
 	glColor3ub(0xff, 0x00, 0xff);
 	ball.draw();
+
+	glColor3ub(0x00, 0xff, 0xff);
+	paddle.draw();
 
 	fontBegin();
 	fontSetHeight(FONT_DEFAULT_HEIGHT);
@@ -63,6 +70,12 @@ void idle(void)
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.y *= -1;
 	}
+	
+	if (paddle.intersectBall(ball))
+	{
+		ball.m_position = ball.m_lastPosition;
+		ball.m_speed.y *= -1;
+	}
 
 	glutPostRedisplay();
 }
@@ -81,6 +94,10 @@ void reshape(int width, int height)
 
 	ball.m_lastPosition = ball.m_position = vec2(field.m_position.x, field.m_position.y + field.m_size.y / 2);
 	ball.m_speed = vec2(1, 1)*2.f;
+
+	paddle.m_position = vec2(
+		field.m_position.x + field.m_size.x / 2,
+		field.m_position.y + field.m_size.y - 64);
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -100,6 +117,9 @@ void keyboardUp(unsigned char key, int x, int y)
 void passiveMotion(int x, int y)
 {
 	printf("passiveMotion: x:%d y:%d\n", x, y);
+	paddle.m_position.x = x - paddle.m_width / 2;	//paddleÇÃíÜêS
+	paddle.m_position.x = max(paddle.m_position.x, field.m_position.x);
+	paddle.m_position.x = min(paddle.m_position.x, field.m_position.x + field.m_size.x - paddle.m_width);
 }
 
 int main(int argc, char *argv[])
