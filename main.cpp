@@ -10,7 +10,10 @@
 #include "glut.h"
 #include "glm/glm.hpp"
 
-#define PADDLE_DEFFAULT_WIDTH 64
+#define PADDLE_DEFFAULT_WIDTH 48
+#define BLOCK_COLUMN_MAX 14
+#define BLOCK_ROW_MAX 8
+#define BALL_X_SPEED_MAX 4.f
 
 using namespace glm;
 
@@ -21,6 +24,7 @@ bool keys[256];
 Rect field;
 Ball ball = { 8 };
 Paddle paddle = { PADDLE_DEFFAULT_WIDTH };
+Rect blocks[BLOCK_ROW_MAX][BLOCK_COLUMN_MAX];
 
 void display(void)
 {
@@ -37,8 +41,31 @@ void display(void)
 			field.m_position.x + field.m_size.x + 8, windowSize.y);
 	glColor3ub(0x00, 0x00, 0x00);
 	field.draw();
+	{//block‚Ì•`‰æ
+		unsigned char colors[][3] = {
+			{0xff, 0x00, 0x00},
+			{0xff, 0x80, 0x00},
+			{0x00, 0xff, 0x00},
+			{0xff, 0xff, 0x00},
+		};
 
-	glColor3ub(0xff, 0x00, 0xff);
+		for (int i = 0; i < BLOCK_ROW_MAX; i++)
+		{
+			for (int j = 0; j < BLOCK_COLUMN_MAX; j++)
+			{
+				if (blocks[i][j].isDead) continue;
+
+				int colorIndx = i / 2;
+				unsigned char *color = colors[colorIndx];
+				glColor3ub(color[0], color[1], color[2]);
+				//blocks[i][j].draw();
+				glRectfv((GLfloat *)&(blocks[i][j].m_position + vec2(1, 1)),
+					(GLfloat *)&(blocks[i][j].m_position + blocks[i][j].m_size - vec2(1, 1)));
+			}
+		}
+	}
+
+	glColor3ub(0xff, 0xff, 0xff);
 	ball.draw();
 
 	glColor3ub(0x00, 0xff, 0xff);
@@ -75,6 +102,29 @@ void idle(void)
 	{
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.y *= -1;
+
+		float paddleCenterX = paddle.m_position.x + paddle.m_width / 2;
+		float sub = ball.m_position.x - paddleCenterX;
+		float subMax = paddle.m_width / 2;
+		ball.m_speed.x = sub / subMax * BALL_X_SPEED_MAX;
+	}
+
+	bool flag = false;
+	for (int i = 0; i < BLOCK_ROW_MAX; i++)
+	{
+		for (int j = 0; j < BLOCK_COLUMN_MAX; j++)
+		{
+			if (blocks[i][j].isDead) continue;
+
+			if (blocks[i][j].intersect(ball.m_position))
+			{
+				blocks[i][j].isDead = true;
+				ball.m_speed.y *= -1;
+				flag = true;
+				break;
+			}
+		}
+		if (flag) break;
 	}
 
 	glutPostRedisplay();
@@ -93,11 +143,24 @@ void reshape(int width, int height)
 	field.m_position.y = frameHeight;
 
 	ball.m_lastPosition = ball.m_position = vec2(field.m_position.x, field.m_position.y + field.m_size.y / 2);
-	ball.m_speed = vec2(1, 1)*2.f;
+	ball.m_speed = vec2(1, 1)*4.f;
 
 	paddle.m_position = vec2(
 		field.m_position.x + field.m_size.x / 2,
-		field.m_position.y + field.m_size.y - 64);
+		field.m_position.y + field.m_size.y - 48);
+
+	vec2 blockSize = vec2(field.m_size.x / BLOCK_COLUMN_MAX, 12);
+	float y = field.m_position.y + 64;
+	for (int i = 0; i < BLOCK_ROW_MAX; i++)
+	{
+		for (int j = 0; j < BLOCK_COLUMN_MAX; j++)
+		{
+			blocks[i][j].m_position = vec2(
+				field.m_position.x + field.m_size.x *j / BLOCK_COLUMN_MAX,
+				y + i*blockSize.y);
+			blocks[i][j].m_size = blockSize;
+		}
+	}
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -105,7 +168,7 @@ void keyboard(unsigned char key, int x, int y)
 	printf("keyboard: \'%c\' (%#x)\n", key, key);
 	if (key == 0x1b)
 		exit(0);
-	
+
 	keys[key] = true;
 }
 void keyboardUp(unsigned char key, int x, int y)
