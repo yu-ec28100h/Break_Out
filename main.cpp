@@ -16,7 +16,7 @@ ivec2 windowSize = { 800, 600 };
 bool keys[256];
 
 Rect field;
-Ball ball = {8};
+Ball ball = { 8 };
 
 void display(void)
 {
@@ -34,8 +34,8 @@ void display(void)
 	glColor3ub(0x00, 0x00, 0x00);
 	field.draw();
 
-	glColor3ub(0xff, 0xff, 0xff);
-	ball.draw()
+	glColor3ub(0xff, 0x00, 0xff);
+	ball.draw();
 
 	fontBegin();
 	fontSetHeight(FONT_DEFAULT_HEIGHT);
@@ -55,10 +55,10 @@ void idle(void)
 		||(ball.m_position.x >= field.m_position.x + field.m_size.x))
 	{
 		ball.m_position = ball.m_lastPosition;
-		ball.m_speed.y *= -1;
+		ball.m_speed.x *= -1;
 	}
-	if((ball.m_position.y >= field.m_position.y + field.m_size.y)
-		||(ball.m_position.y < field.m_position.y))
+	if((ball.m_position.y < field.m_position.y)
+		||(ball.m_position.y >= field.m_position.y + field.m_size.y))
 	{
 		ball.m_position = ball.m_lastPosition;
 		ball.m_speed.y *= -1;
@@ -80,7 +80,7 @@ void reshape(int width, int height)
 	field.m_position.y = frameHeight;
 
 	ball.m_lastPosition = ball.m_position = vec2(field.m_position.x, field.m_position.y + field.m_size.y / 2);
-	ball.m_speed = vec2(1, 1) * 2.f;
+	ball.m_speed = vec2(1, 1)*2.f;
 }
 
 void keyboard(unsigned char key, int x, int y)
