@@ -11,12 +11,24 @@
 #include "glm/glm.hpp"
 
 #define PADDLE_DEFFAULT_WIDTH 48
+
 #define BLOCK_COLUMN_MAX 14
 #define BLOCK_ROW_MAX 8
-#define BALL_X_SPEED_MAX 4.f
+
+#define BLOCK_HEIGHT 12
+#define BALL_X_SPEED_MAX 2.f
 #define FONT_HEIGHT 32
 #define FONT_WEIGHT 4
 #define SE_WAIT_MAX 6
+
+enum {
+	LEVEL_DEFAULT,
+	LEVEL_HIT_4,
+	LEVEL_HIT_12,
+	LEVEL_HIT_ORANGE,
+	LEVEL_HIT_RED,
+	LEVEL_MAX
+};
 
 using namespace glm;
 
@@ -34,6 +46,29 @@ int score;
 
 int seCout;
 int seWait;
+
+int level;
+float powerTbl[] = {
+	3,	//LEVEL_DEFAULT,
+	4,	//LEVEL_HIT_4,
+	5,	//LEVEL_HIT_12,
+	6,	//LEVEL_HIT_ORANGE,
+	7	//LEVEL_HIT_RED,
+};
+int getBlockCount()
+{
+	int n = 0;
+
+	for (int i = 0; i < BLOCK_ROW_MAX; i++)
+	{
+		for (int j = 0; j < BLOCK_COLUMN_MAX; j++)
+		{
+			if (!blocks[i][j].isDead) n++;
+		}
+	}
+
+	return n;
+}
 
 void display(void)
 {
@@ -99,6 +134,14 @@ void display(void)
 		}
 		fontSetPosition(x + field.m_size.x / 2, y);
 		fontDraw("000");
+		y += fontGetHeight() + fontGetWeight();
+
+		fontSetHeight(16);
+		fontSetWeight(2);
+		x = field.m_position.x;
+		y += BLOCK_ROW_MAX * BLOCK_HEIGHT;
+		fontSetPosition(x, y);
+		fontDraw("Level: %d\n", level);
 		fontEnd();
 	}
 
@@ -120,6 +163,9 @@ void idle(void)
 		}
 	}
 	audioUpdate();
+
+	
+	ball.m_power = powerTbl[level];
 	ball.update();
 
 	if((ball.m_position.x < field.m_position.x)
@@ -183,6 +229,21 @@ void idle(void)
 
 				score += s;
 
+				{
+					int n = getBlockCount();
+					int blockCountMax = BLOCK_COLUMN_MAX * BLOCK_ROW_MAX;
+					if ((n <= blockCountMax - 4) && (level < LEVEL_HIT_4))	//４回ヒットしたら加速
+						level = LEVEL_HIT_4;
+					
+					if ((n <= blockCountMax - 12) && (level < LEVEL_HIT_12))	//12回ヒットしたら加速
+						level = LEVEL_HIT_12;
+					
+					if ((colorIdx == 2) && (level < LEVEL_HIT_ORANGE))	//オレンジブロックにヒットしたら加速
+						level = LEVEL_HIT_ORANGE;
+					if ((colorIdx == 3) && (level < LEVEL_HIT_RED))	//レッドブロックにヒットしたら加速
+						level = LEVEL_HIT_RED;
+				}
+
 				flag = true;
 				break;
 			}
@@ -206,7 +267,8 @@ void reshape(int width, int height)
 	field.m_position.y = frameHeight;
 
 	ball.m_lastPosition = ball.m_position = vec2(field.m_position.x, field.m_position.y + field.m_size.y / 2);
-	ball.m_speed = vec2(1, 1)*4.f;
+	ball.m_speed = vec2(1, 1);
+	ball.m_power = 1;
 
 	paddle.m_position = vec2(
 		field.m_position.x + field.m_size.x / 2,

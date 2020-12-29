@@ -12,12 +12,8 @@
 
 void Ball::update()
 {
-	//updateAfterImage();
-	
 	m_lastPosition = m_position;
-
-	m_speed.y += m_gravity;
-	m_position += m_speed;
+	m_position += m_speed * m_power;
 }
 
 /*void Ball::drawAfterImage()
